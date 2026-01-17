@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Your Own Linux Kernel - A Beginner's Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>$ ./build_kernel.sh</h1>
+            <p class="subtitle">A No-BS Guide to Building Your Own Linux Kernel<span class="blink">_</span></p>
+        </header>
+
+        <div class="section">
+            <h2><span class="step-number">0</span> Prerequisites</h2>
+            <p>Before we dive in, make sure you've got:</p>
+            <ul>
+                <li>A Linux system (obviously!) - any distro works</li>
+                <li>At least 30GB of free disk space</li>
+                <li>2+ hours of time (first build takes a while)</li>
+                <li>Coffee ☕ (optional but recommended)</li>
+                <li>A backup or snapshot of your system (seriously, do this)</li>
+            </ul>
+            
+            <div class="warning">
+                <strong>⚠️ WARNING:</strong> Building and installing a custom kernel can potentially make your system unbootable if something goes wrong. ALWAYS keep your old kernel around as a fallback option in GRUB. We'll show you how to do this safely.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">1</span> Install Build Dependencies</h2>
+            <p>First, we need to install the tools required to build the kernel. The packages vary by distro:</p>
+            
+            <div class="distro-tabs">
+                <div class="tab active" onclick="switchTab(event, 'debian')">Debian/Ubuntu</div>
+                <div class="tab" onclick="switchTab(event, 'fedora')">Fedora/RHEL</div>
+                <div class="tab" onclick="switchTab(event, 'arch')">Arch/Manjaro</div>
+                <div class="tab" onclick="switchTab(event, 'opensuse')">openSUSE</div>
+            </div>
+
+            <div id="debian" class="tab-content active">
+                <div class="code-block">
+                    <pre>sudo apt update
+sudo apt install -y build-essential libncurses-dev bison flex \
+  libssl-dev libelf-dev bc git wget dwarves</pre>
+                </div>
+                <p class="command-explanation">This installs the compiler, libraries, and tools needed for kernel compilation.</p>
+            </div>
+
+            <div id="fedora" class="tab-content">
+                <div class="code-block">
+                    <pre>sudo dnf install -y gcc make ncurses-devel bison flex \
+  openssl-devel elfutils-libelf-devel bc git wget dwarves</pre>
+                </div>
+                <p class="command-explanation">This installs the compiler, libraries, and tools needed for kernel compilation.</p>
+            </div>
+
+            <div id="arch" class="tab-content">
+                <div class="code-block">
+                    <pre>sudo pacman -S --needed base-devel ncurses bison flex \
+  openssl libelf bc git wget pahole</pre>
+                </div>
+                <p class="command-explanation">This installs the compiler, libraries, and tools needed for kernel compilation.</p>
+            </div>
+
+            <div id="opensuse" class="tab-content">
+                <div class="code-block">
+                    <pre>sudo zypper install -y gcc make ncurses-devel bison flex \
+  libopenssl-devel libelf-devel bc git wget dwarves</pre>
+                </div>
+                <p class="command-explanation">This installs the compiler, libraries, and tools needed for kernel compilation.</p>
+            </div>
+
+            <div class="tip">
+                <strong>💡 TIP:</strong> If you get an error about a missing package, it might have a slightly different name on your distro. Google the error message - someone's probably solved it already!
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">2</span> Clone the Linux Kernel Source</h2>
+            <p>Now we'll grab the kernel source code from the official Git repository:</p>
+            
+            <div class="code-block">
+                <pre>cd ~
+git clone https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+cd linux</pre>
+            </div>
+            <p class="command-explanation">This downloads the entire kernel source tree. It's big (several GB), so grab that coffee!</p>
+
+            <h3>Choose Your Kernel Version</h3>
+            <p>Check what versions are available:</p>
+            <div class="code-block">
+                <pre>git tag | grep -E '^v[0-9]+\.[0-9]+(\.[0-9]+)?$' | tail -20</pre>
+            </div>
+
+            <p>Let's use a stable version (replace X.Y with the version you want):</p>
+            <div class="code-block">
+                <pre>git checkout v6.6.10</pre>
+            </div>
+
+            <div class="info">
+                <strong>📌 INFO:</strong> Stick with stable versions (those with three numbers like 6.6.10). Avoid release candidates (-rc) unless you're feeling adventurous!
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">3</span> Configure the Kernel</h2>
+            <p>This is where you decide what features your kernel will have. There are several ways to do this:</p>
+
+            <h3>Option A: Use Your Current Kernel Config (Recommended for Beginners)</h3>
+            <p>This copies your current working configuration as a starting point:</p>
+            <div class="code-block">
+                <pre>cp /boot/config-$(uname -r) .config
+make olddefconfig</pre>
+            </div>
+            <p class="command-explanation"><code>olddefconfig</code> updates the config for the new kernel version, using defaults for new options.</p>
+
+            <h3>Option B: Interactive Menu Configuration</h3>
+            <p>Want to tweak specific settings? Use the menu interface:</p>
+            <div class="code-block">
+                <pre>make menuconfig</pre>
+            </div>
+            <p class="command-explanation">Navigate with arrow keys, Space to select, / to search, ? for help. Press Esc twice to exit.</p>
+
+            <h3>Option C: Start from Scratch (Advanced)</h3>
+            <div class="code-block">
+                <pre>make defconfig</pre>
+            </div>
+
+            <div class="tip">
+                <strong>💡 TIP:</strong> For your first build, use Option A. You can always rebuild with a custom config later. Some useful menuconfig settings to know about:
+                <ul>
+                    <li><strong>General setup → Local version</strong> - Add a custom name like "-mycustom"</li>
+                    <li><strong>Processor type and features</strong> - CPU-specific optimizations</li>
+                    <li><strong>Device Drivers</strong> - Hardware support (remove unused stuff to speed up builds)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">4</span> Build the Kernel</h2>
+            <p>Time for the actual compilation! This will take a while (30 min to 2+ hours depending on your hardware).</p>
+
+            <h3>Option 1: Build and Install Directly (Easier)</h3>
+            <p>This builds the kernel and installs it to your system in one go:</p>
+            <div class="code-block">
+                <pre>make -j$(nproc)
+sudo make modules_install
+sudo make install</pre>
+            </div>
+            <p class="command-explanation">
+                <code>-j$(nproc)</code> uses all your CPU cores for parallel compilation.<br>
+                <code>modules_install</code> installs kernel modules.<br>
+                <code>make install</code> copies the kernel to /boot and updates GRUB automatically.
+            </p>
+
+            <h3>Option 2: Build to Output Folder (More Control)</h3>
+            <p>Build everything to a separate directory first:</p>
+            <div class="code-block">
+                <pre>make O=~/kernel-build -j$(nproc)
+make O=~/kernel-build modules_install INSTALL_MOD_PATH=~/kernel-output
+make O=~/kernel-build install INSTALL_PATH=~/kernel-output</pre>
+            </div>
+
+            <p>Then manually copy to your system:</p>
+            <div class="code-block">
+                <pre>sudo cp -r ~/kernel-output/lib/modules/* /lib/modules/
+sudo cp ~/kernel-output/vmlinuz-* /boot/
+sudo cp ~/kernel-output/System.map-* /boot/
+sudo cp ~/kernel-output/config-* /boot/</pre>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ IMPORTANT:</strong> The build process will use a lot of CPU and RAM. Your computer will run hot and slow. This is normal! Don't panic if it seems frozen - it's just crunching numbers.
+            </div>
+
+            <div class="info">
+                <strong>📌 BUILD TAKING FOREVER?</strong> Here are some speedup tricks:
+                <ul>
+                    <li>Use <code>make localmodconfig</code> before building - it only builds modules you're currently using</li>
+                    <li>Disable debugging options in menuconfig (Kernel hacking section)</li>
+                    <li>Consider using <code>ccache</code> for faster rebuilds</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">5</span> Update GRUB</h2>
+            <p>Make sure your bootloader knows about the new kernel:</p>
+
+            <div class="distro-tabs">
+                <div class="tab active" onclick="switchTab(event, 'grub-debian')">Debian/Ubuntu</div>
+                <div class="tab" onclick="switchTab(event, 'grub-fedora')">Fedora/RHEL</div>
+                <div class="tab" onclick="switchTab(event, 'grub-arch')">Arch/Manjaro</div>
+                <div class="tab" onclick="switchTab(event, 'grub-opensuse')">openSUSE</div>
+            </div>
+
+            <div id="grub-debian" class="tab-content active">
+                <div class="code-block">
+                    <pre>sudo update-grub</pre>
+                </div>
+            </div>
+
+            <div id="grub-fedora" class="tab-content">
+                <div class="code-block">
+                    <pre>sudo grub2-mkconfig -o /boot/grub2/grub.cfg</pre>
+                </div>
+            </div>
+
+            <div id="grub-arch" class="tab-content">
+                <div class="code-block">
+                    <pre>sudo grub-mkconfig -o /boot/grub/grub.cfg</pre>
+                </div>
+            </div>
+
+            <div id="grub-opensuse" class="tab-content">
+                <div class="code-block">
+                    <pre>sudo grub2-mkconfig -o /boot/grub2/grub.cfg</pre>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>💡 SAFETY TIP:</strong> Your old kernel(s) should still appear in the GRUB menu. If your new kernel doesn't boot, just select the old one from the GRUB menu (you might need to press Shift or Esc during boot to see the menu).
+            </div>
+
+            <h3>Make Your Custom Kernel the Default (Optional)</h3>
+            <p>Edit GRUB config to set which kernel boots by default:</p>
+            <div class="code-block">
+                <pre>sudo nano /etc/default/grub</pre>
+            </div>
+            <p>Change <code>GRUB_DEFAULT=0</code> to boot your new kernel (0 = first entry, 1 = second, etc.)</p>
+            <p>Then update GRUB again using the command above.</p>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">6</span> Reboot and Test</h2>
+            <p>Moment of truth! Reboot your system:</p>
+            <div class="code-block">
+                <pre>sudo reboot</pre>
+            </div>
+
+            <p>After booting, verify you're running your new kernel:</p>
+            <div class="code-block">
+                <pre>uname -r</pre>
+            </div>
+
+            <p>You should see your new kernel version (with any custom local version string you added)!</p>
+
+            <div class="warning">
+                <strong>🚨 IF IT DOESN'T BOOT:</strong>
+                <ul>
+                    <li>Don't panic! Your computer isn't bricked.</li>
+                    <li>Power off and restart.</li>
+                    <li>At the GRUB menu, select your old kernel.</li>
+                    <li>Once booted, review your kernel config and rebuild.</li>
+                    <li>Common issues: missing filesystem support, wrong initramfs, incorrect drivers.</li>
+                </ul>
+            </div>
+
+            <div class="tip">
+                <strong>🎉 SUCCESS?</strong> Congratulations! You've just built and booted your own Linux kernel! You're now officially a kernel hacker. Time to celebrate! 🚀
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Bonus: Cleaning Up</h2>
+            <p>The kernel source directory can get messy. Clean up build artifacts:</p>
+            <div class="code-block">
+                <pre>make clean          # Remove most generated files
+make mrproper      # Remove ALL generated files (including .config)
+make distclean     # Nuclear option - pristine source</pre>
+            </div>
+
+            <h3>Remove Old Kernels</h3>
+            <p>Over time, you'll accumulate multiple kernels. Remove old ones to free space:</p>
+            <div class="code-block">
+                <pre># List installed kernels
+dpkg --list | grep linux-image    # Debian/Ubuntu
+rpm -qa kernel                    # Fedora/RHEL
+
+# Remove old kernel (replace version number)
+sudo apt remove linux-image-5.x.x-x    # Debian/Ubuntu
+sudo dnf remove kernel-5.x.x-x         # Fedora/RHEL</pre>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ WARNING:</strong> Never remove your currently running kernel or ALL your kernels. Always keep at least one known-good kernel as a backup!
+            </div>
+        </div>
+
+        <footer>
+            <p><span class="terminal-prompt">root@localhost:~#</span> Happy Kernel Hacking!</p>
+            <p style="margin-top: 1rem; color: var(--text-dim); font-size: 0.85rem;">
+                Made with 💚 for Linux enthusiasts everywhere | 
+                <a href="https://kernel.org" style="color: var(--accent-cyan);">kernel.org</a> | 
+                <a href="https://docs.kernel.org" style="color: var(--accent-cyan);">Official Kernel Docs</a>
+            </p>
+            <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--bg-secondary); border: 1px solid var(--accent-green); border-radius: 4px;">
+                <p style="color: var(--accent-green); font-weight: bold; margin-bottom: 0.5rem;">Need help or want to chat?</p>
+                <p style="color: var(--text-main); margin-bottom: 1rem;">Join our Discord community for support, tips, and kernel hacking discussions!</p>
+                <a href="https://discord.gg/jUgaXChYFe" target="_blank" style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--accent-green); color: var(--bg-main); text-decoration: none; border-radius: 4px; font-weight: bold; transition: all 0.3s ease;">
+                    🎮 Join Discord Server
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
