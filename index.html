@@ -150,17 +150,48 @@ make olddefconfig</pre>
             <h2><span class="step-number">4</span> Build the Kernel</h2>
             <p>Time for the actual compilation! This will take a while (30 min to 2+ hours depending on your hardware).</p>
 
-            <p>Build the kernel and install it to your system:</p>
+            <h3>Step 1: Build the Kernel</h3>
             <div class="code-block">
-                <pre>make -j$(nproc)
-sudo make modules_install
+                <pre>make -j$(nproc)</pre>
+            </div>
+            <p class="command-explanation"><code>-j$(nproc)</code> uses all your CPU cores for parallel compilation.</p>
+
+            <h3>Step 2: Install Modules and Kernel</h3>
+            <p>Now install everything to your system:</p>
+            <div class="code-block">
+                <pre>sudo make modules_install
 sudo make install</pre>
             </div>
             <p class="command-explanation">
-                <code>-j$(nproc)</code> uses all your CPU cores for parallel compilation.<br>
                 <code>modules_install</code> installs kernel modules to /lib/modules/.<br>
                 <code>make install</code> copies the kernel to /boot and updates GRUB automatically.
             </p>
+
+            <h3>Optional: Build to a Staging Folder First</h3>
+            <p>If you want to inspect the build output before installing to your system, you can build to a temporary folder:</p>
+            <div class="code-block">
+                <pre>make -j$(nproc)
+make modules_install INSTALL_MOD_PATH=~/kernel-staging
+make install INSTALL_PATH=~/kernel-staging</pre>
+            </div>
+
+            <p>Check what was built:</p>
+            <div class="code-block">
+                <pre>ls -lh ~/kernel-staging/
+ls -lh ~/kernel-staging/lib/modules/</pre>
+            </div>
+
+            <p>When ready, copy (or move) to your system:</p>
+            <div class="code-block">
+                <pre>sudo cp -r ~/kernel-staging/lib/modules/* /lib/modules/
+sudo cp ~/kernel-staging/vmlinuz-* /boot/
+sudo cp ~/kernel-staging/System.map-* /boot/
+sudo cp ~/kernel-staging/config-* /boot/</pre>
+            </div>
+
+            <div class="tip">
+                <strong>💡 TIP:</strong> Use <code>mv</code> instead of <code>cp</code> if you want to move the files instead of copying them (saves disk space).
+            </div>
 
             <div class="warning">
                 <strong>⚠️ IMPORTANT:</strong> The build process will use a lot of CPU and RAM. Your computer will run hot and slow. This is normal! Don't panic if it seems frozen - it's just crunching numbers.
