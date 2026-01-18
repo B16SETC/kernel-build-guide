@@ -108,7 +108,13 @@ cd linux</pre>
 
         <div class="section">
             <h2><span class="step-number">3</span> Configure the Kernel</h2>
-            <p>This is where you decide what features your kernel will have. There are several ways to do this:</p>
+            <p>First, clean the source tree to ensure a fresh start:</p>
+            <div class="code-block">
+                <pre>make mrproper</pre>
+            </div>
+            <p class="command-explanation">This removes all generated files and gets the source tree to a pristine state.</p>
+
+            <p>Now you can decide what features your kernel will have. There are several ways to do this:</p>
 
             <h3>Option A: Use Your Current Kernel Config (Recommended for Beginners)</h3>
             <p>This copies your current working configuration as a starting point:</p>
