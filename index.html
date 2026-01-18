@@ -150,8 +150,7 @@ make olddefconfig</pre>
             <h2><span class="step-number">4</span> Build the Kernel</h2>
             <p>Time for the actual compilation! This will take a while (30 min to 2+ hours depending on your hardware).</p>
 
-            <h3>Option 1: Build and Install Directly (Easier)</h3>
-            <p>This builds the kernel and installs it to your system in one go:</p>
+            <p>Build the kernel and install it to your system:</p>
             <div class="code-block">
                 <pre>make -j$(nproc)
 sudo make modules_install
@@ -159,25 +158,9 @@ sudo make install</pre>
             </div>
             <p class="command-explanation">
                 <code>-j$(nproc)</code> uses all your CPU cores for parallel compilation.<br>
-                <code>modules_install</code> installs kernel modules.<br>
+                <code>modules_install</code> installs kernel modules to /lib/modules/.<br>
                 <code>make install</code> copies the kernel to /boot and updates GRUB automatically.
             </p>
-
-            <h3>Option 2: Build to Output Folder (More Control)</h3>
-            <p>Build everything to a separate directory first:</p>
-            <div class="code-block">
-                <pre>make O=~/kernel-build -j$(nproc)
-make O=~/kernel-build modules_install INSTALL_MOD_PATH=~/kernel-output
-make O=~/kernel-build install INSTALL_PATH=~/kernel-output</pre>
-            </div>
-
-            <p>Then manually copy to your system:</p>
-            <div class="code-block">
-                <pre>sudo cp -r ~/kernel-output/lib/modules/* /lib/modules/
-sudo cp ~/kernel-output/vmlinuz-* /boot/
-sudo cp ~/kernel-output/System.map-* /boot/
-sudo cp ~/kernel-output/config-* /boot/</pre>
-            </div>
 
             <div class="warning">
                 <strong>⚠️ IMPORTANT:</strong> The build process will use a lot of CPU and RAM. Your computer will run hot and slow. This is normal! Don't panic if it seems frozen - it's just crunching numbers.
