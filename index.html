@@ -53,9 +53,10 @@ sudo apt install -y build-essential libncurses-dev bison flex \
             <div id="fedora" class="tab-content">
                 <div class="code-block">
                     <pre>sudo dnf install -y gcc make ncurses-devel bison flex \
-  openssl-devel elfutils-libelf-devel bc git wget dwarves</pre>
+  openssl-devel elfutils-libelf-devel bc git wget dwarves \
+  openssl-devel-engine</pre>
                 </div>
-                <p class="command-explanation">This installs the compiler, libraries, and tools needed for kernel compilation.</p>
+                <p class="command-explanation">This installs the compiler, libraries, and tools needed for kernel compilation. Note: openssl-devel-engine is needed for OpenSSL 3.x compatibility.</p>
             </div>
 
             <div id="arch" class="tab-content">
