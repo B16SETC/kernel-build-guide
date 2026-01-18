@@ -77,6 +77,17 @@ sudo apt install -y build-essential libncurses-dev bison flex \
             <div class="tip">
                 <strong>💡 TIP:</strong> If you get an error about a missing package, it might have a slightly different name on your distro. Google the error message - someone's probably solved it already!
             </div>
+
+            <div class="warning">
+                <strong>⚠️ COMMON ERROR:</strong> If you get "fatal error: openssl/engine.h: No such file or directory", you're missing OpenSSL development headers. Install them:
+                <div class="code-block" style="margin-top: 0.5rem;">
+                    <pre>sudo apt install libssl-dev        # Debian/Ubuntu
+sudo dnf install openssl-devel     # Fedora/RHEL
+sudo pacman -S openssl             # Arch
+sudo zypper install libopenssl-devel  # openSUSE</pre>
+                </div>
+                Then run <code>make -j$(nproc)</code> again to continue the build.
+            </div>
         </div>
 
         <div class="section">
